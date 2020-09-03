@@ -97,8 +97,8 @@ def recul_uv(p):
         u_list.pop(0)
         u_list.pop(len(u_list)-1)
         u_list = reverse(u_list)
-        u_list.extend(tmp_list)
-        return u_list
+        tmp_list.extend(u_list)
+        return tmp_list
 
 def reverse(v):
     for i in range(len(v)):
@@ -117,7 +117,8 @@ def solution(p):
     if is_valid(p):
         return p
     # return 값으로 U,V 가 합쳐진 값이 들어가야 함. 
-    return recul_uv(p)       
+    
+    return "".join(recul_uv(p))
             
 
 
