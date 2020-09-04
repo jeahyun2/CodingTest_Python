@@ -25,24 +25,57 @@
 
 def lotate(key):
     # key 를 90도 방향으로 돌리기.
-    return key
+    n = len(key)
+    tmp_key = [ [ 0 for i in range(n)] for j in range(n) ]
+    
+    for i in range(n):
+        for j in range(n):
+            tmp_key[i][j] = key[n-1-j][i]
+    return tmp_key
 
-def is_array_more_two(a,b):
-    for i in range(len(a)):
-        if a[i] + a[b] > 1 :
-            return False
+def is_array_fill_one(a,b,i,j,k,m):
+# b array 의 모든값이 1 이여야 함. 
+    # 범위 n-1:n**2-n
+    # 범위 n-1 : 2n -1
+    # lock = 0,0 - 2,2 / map = 2,2 - 4,4
+    n = len(b)
+    for i in range(n):
+        for j in range(n):
+            if a[n-1+i][n-1+j] + b[i][j] != 1 :
+                return False
     return True
 
 def solution(key,lock):
     
     # 4번 돌면서, key + lock 의 모든 배열의 합이 2를 넘지 않는 경우가 존재하면 True, 아니면 False.
     for i in range(4):
-        if is_array_more_two(key,lock):
-            return True
-        else:
-            key = lotate(key)
+    # key 의 크기를 N 배 키워서 이 안에서 키를 움직였을 때 lock 이 충돌하지 않는 경우 찾기. 
+        n=len(key)        
+        
+        # for i in range(len(tmp_map)):
+        #     for j in range(len(tmp_map)):
+        #         # tmp_map[i][j] = lock[i+n-1][j+n-1]
+        
+        # N = 3 일때 도는 횟수는 5번 n**2 - n - 1
+        for i in range(n**2 -n - 1 ):
+            for j in range(n**2 -n - 1 ):
+                # tmp_map 의 특정 범위에 key 값을 더한다.  
+                # 더해진 tmp_map 의 특정 범위와 lock 을 is_array_more_two 함수로 보내 확인한다. 
+                tmp_map = [[0 for x in range(n**2-2)] for y in range(n**2-2)]
+                # print(tmp_map)
+                for k in range(n):
+                    for m in range(n):
+                        tmp_map[i+k][j+m] = key[k][m] #tmp_map[i+k][j+m] + key[k][m]
+                
+                if is_array_fill_one(tmp_map,lock,i,j,k,m):
+                    print(tmp_map)
+                    return True
+        
+        key = lotate(key)
     return False 
 
-
+# 문제에서 이동 부분을 빼먹음. 이동에 대한 구현이 필요
 key = [[0, 0, 0], [1, 0, 0], [0, 1, 1]]	
 lock = [[1, 1, 1], [1, 1, 0], [1, 0, 1]]	
+
+print(solution(key,lock))
