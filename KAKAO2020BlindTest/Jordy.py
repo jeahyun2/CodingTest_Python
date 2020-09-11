@@ -31,93 +31,82 @@
 # 5	[[1,0,0,1],[1,1,1,1],[2,1,0,1],[2,2,1,1],[5,0,0,1],[5,1,0,1],[4,2,1,1],[3,2,1,1]]	[[1,0,0],[1,1,1],[2,1,0],[2,2,1],[3,2,1],[4,2,1],[5,0,0],[5,1,0]]
 # 5	[[0,0,0,1],[2,0,0,1],[4,0,0,1],[0,1,1,1],[1,1,1,1],[2,1,1,1],[3,1,1,1],[2,0,0,0],[1,1,1,0],[2,2,0,1]]	[[0,0,0],[0,1,1],[1,1,1],[2,1,1],[3,1,1],[4,0,0]]
 
-def addList(a,b):
-    if len(a) != len(b):
-        return a
-    tmp = [0 for _ in range(len(a))]
-    for i in range(len(a)):
-        tmp[i]=a[i]+b[i]
-    return tmp
-
+import copy
 
 # 각 함수는 x,y 와 현재 지어진 상태를 받음. 
 # 각 상태를 보고 판단하여 지으는 함수 혹은 제거하는 기능을 수행.
-def create(build, switch, current):
-    # current == [] 
-    
-    if build[1] == 0 and switch == 0 :
-        # 바닥에 있으면 기둥은 무조건 건설. 
+def add_list(build_value, operators):
+    # build operators 의 내용을 다 더하자. 
+    tmp_value = copy.copy(build_value)
+    for oper in operators:
+        tmp_value[0] = tmp_value[0]+oper[0]
+        tmp_value[1] = tmp_value[1]+oper[1]
+    return tmp_value
+
+def create(build, switch, current,n):
+    if build[1] == 0:
         return True
-    else:
-        # if ... in current : 
-        tmp_lbo = [build[0]-1, build[1], 1]
-        tmp_rbo = [build[0]+1, build[1], 1]
-        tmp_lgi = [build[0], build[1]-1, 0]
-        tmp_rgi = [build[0]+1, build[1]-1, 0]
-# 4,2,1 
-        if switch == 0 and (tmp_lbo in current or tmp_lgi in current) :
-            # 만들려는게 기둥인 경우, tmp_bo 나 tmp_gi 가 존재하면 만들자.
+    gi = [build[0], build[1], 0]
+    bo = [build[0], build[1], 1]
+    up = [0, 1]
+    down = [0, -1]
+    left = [-1, 0]
+    right = [1, 0]
+   
+    if switch == 0 :
+        # 기둥
+        # 동 라인에 보들이 한개라도 존재하는가? 혹은 아래에 기둥이 있는가
+        if add_list(bo,[left]) in current or bo in current or add_list(gi,[down]) in current :
             return True
-        elif switch == 1 :
-            # 만들려는게 보 인경우
-            # 왼편이나 오른편에 기둥이 있으면 바로 보를 건설 가능.
-            # 왼편에 보가 있으면 우편에 보나 기둥이 있어야함.(기둥은 이미 위에서 확인했으므로)
-            if tmp_lgi in current or tmp_rgi in current :
-                return True
-            elif tmp_lbo in current and tmp_rbo in current:
-                return True 
-            # (tmp_lbo in current and (tmp_rbo in current or tmp_rgi in current):                
+    elif switch == 1 :
+        # 보
+        # 아래에 동 라인, 혹은 오른쪽 아래 기둥이 존재하면, 
+        if add_list(gi,[down]) in current or add_list(gi,[down,right]) in current :
+            return True
+        # 왼쪽, 오륹쪽 모드 보가 존재하는가?
+        elif add_list(bo,[left]) in current and add_list(bo,[right]) in current:
+            return True
+
     return False
-def remove(build,switch, current):
-    # 기둥 / 위에 보가 없는 상태에서 기둥이 있으면 제거 불가.
-    # 기둥 / 위에 연결된 보가 open 상태이면 기둥 제거 불가. 
-    tmp_gi = [build[0], build[1], 0]
-    tmp_bo = [build[0], build[1], 1]
+def remove(build,switch, current,n):
+    if build+[switch] not in current:
+        return False
+    gi = [build[0], build[1], 0]
+    bo = [build[0], build[1], 1]
+    up = [0, 1]
+    down = [0, -1]
+    left = [-1, 0]
+    right = [1, 0]
     
-    up = [0,1,0]
-    down = [0,-1,0]
-    left = [-1,0,0]
-    right = [1,0,0]
-    
-
-    
-    if switch == 0 :# 지우려는게 기둥인 경우 
-        # 왼쪽 위에만 보가 존재하는 상황
-        if addList(tmp_bo, up) not in current and addList(tmp_bo,addList(up, left)) in current and addList(tmp_gi, left) not in current : 
-            # 우측 보가 없는 상태에서 왼쪽에 보에 기둥이 없는 경우. 
-            return False
-        elif addList(tmp_bo, addList(up,left)) in current and addList(tmp_bo,up) in current :
-            # 왼쪽과 오른쪽에 보가 있는 경우. 
-            if addList(tmp_gi, left) not in current and addList(tmp_bo, addList(up, addList(left, left))) not in current :
-                # 왼쪽 기둥이 없는데 붙은 보가 없는 경우
-                return False
-            if addList(tmp_gi,right) not in current and addList(tmp_bo, addList(up, right)) not in current : 
-                # 우측에 기둥이 없는데 우측으로 붙은 보가 없는 경우
-                 return False 
-        elif addList(tmp_bo, addList(up,left)) not in current and addList(tmp_bo, up) in current and addList(tmp_gi,right) not in current :
-            # 우측에만 붙은 경우 
-            return False
-    else :
-        # 보를 삭제하는 경우 
-        # 현재 보 제외하고 보에 있는 기둥과 연결된 구조물이 없는 경우
-        # 양 옆에 보가 존재할 때, 좌 혹은 우에 기둥이 존재하지 않는 경우
-        # 보의 왼쪽에 연결된 기둥
-        if tmp_gi in current and addList(tmp_bo,left) not in current and addList(tmp_gi,down) not in current:  
-            return False
-        elif addList(tmp_gi,right) in current and addList(tmp_gi, addList(right, down)) not in current and addList(tmp_bo, right) not in current:
-            # 보의 오른쪽에 연결된 기둥
-            return False
-        elif addList(tmp_gi,down) in current and addList(tmp_bo,right) in current and addList(tmp_bo, addList(right,right)) not in current and addList(tmp_bo, addList(down, addList(right + right))) not in current:
-            # 왼편에 기둥이 있는 상태에서, 오른쪽에 보가 연결된 경우 오른쪽과 그 아래 확인 필요
-            return False
-        elif addList(tmp_gi, addList(right,down)) in current and addList(tmp_bo,left) in current and addList(tmp_bo, addList(left, left)) not in current and addList(tmp_gi, addList(left, down)) not in current : 
-            return False
-        elif addList(tmp_gi,down) not in current and addList(tmp_gi, addList(right, down)) not in current :
-            # 양쪽에 모두 기둥이 없는 경우
-            if (addList(tmp_bo, left) in current and addList(tmp_gi, addList(left, down)) not in current) or (addList(tmp_bo,right) in current and addList(tmp_gi, addList(right, addList(right,down))) not in current):
-                return False
-
-    return True
+    # 기둥 
+    if switch == 0:
+        if (add_list(gi,[left]) in current and add_list(bo, [up,left]) in current) or (add_list(gi,[right]) in current and add_list(bo,[up])):
+            # 왼쪽 기둥과 보 조합, 오른쪽 기둥과 보 조합 이면, 
+            return True
+        elif add_list(bo,[left,left,up]) in current and add_list(bo,[left,up]) in current and add_list(bo,[up]) in current and add_list(bo,[right,up]) in current:
+            # 보 4개가 연결된 상황이면, 아래 지워도 됨.
+            return True
+        elif add_list(gi,[up]) in current and (add_list(bo,[up,left]) in bo or add_list(bo,[up]) in bo) :
+            #위에 2가지 케이스로 위에 기둥 케이스는 모두 포함되는 것 같음.
+            return True
+    elif switch == 1:
+        if add_list(gi,[down]) in current :
+            if add_list(bo,[right]) not in current : 
+                # 보 아래 기둥이 있고 동시에 우측 보는 없는 경우.
+                return True
+            elif add_list(bo,[right]) in current and (add_list(gi,[right,down]) in current or add_list(gi,[right, right, down]) in current):
+                # 보 아래 기둥이 있고 우측 보가 존재하면서 동시에 우측보를 이어주는 기둥이 존재하는 경우
+                return True
+        elif add_list(gi,[right,down]) in current:
+            if add_list(bo,[left]) not in current : 
+                # 보 우측 아래 기둥이 있고 동시에 왼쪽 보는 없는 경우.
+                return True
+            elif add_list(bo,[left]) in current and (add_list(gi,[down]) in current or add_list(gi,[left, down]) in current):
+                # 보 우측 아래 기둥이 있고 좌측 보가 존재하면서 동시에 좌측보를 이어주는 기둥들이 존재하는 경우
+                return True
+        elif add_list(gi,[down]) in current and add_list(right,[down]) in current:
+            return True
+    return False
 
 def solution(n,build_frame):
     answer = []
@@ -126,21 +115,40 @@ def solution(n,build_frame):
         build.extend(frame[0:2])
         build_type = frame[2]
         build_able = frame[3]
+        
         if build_able == 0:
-            if remove(build, build_type, answer) :
+            if remove(build, build_type, answer,n) :
                 answer.remove(frame[0:3])
         else :
-            if create(build,build_type,answer):
+            if create(build,build_type,answer,n):
                 answer.append(frame[0:3])
-
-    return answer
+    
+    return sorted(answer)
 
 n= 5 # 벽면크기. 
 # x, y, a, b. x,y 지어지는 위치. a=0 기둥 1 보. b =0 제거 1 설치
-# build_frame = [[1,0,0,1],[1,1,1,1],[2,1,0,1],[2,2,1,1],[5,0,0,1],[5,1,0,1],[4,2,1,1],[3,2,1,1]] #건설요청
-build_frame= [[0,0,0,1],[2,0,0,1],[4,0,0,1],[0,1,1,1],[1,1,1,1],[2,1,1,1],[3,1,1,1],[2,0,0,0],[1,1,1,0],[2,2,0,1]]	
-# x,y,a x,y 그리고 타입. 
-# result =[[1,0,0],[1,1,1],[2,1,0],[2,2,1],[3,2,1],[4,2,1],[5,0,0],[5,1,0]] # 실제 건설
-result = [[0,0,0],[0,1,1],[1,1,1],[2,1,1],[3,1,1],[4,0,0]]
+build_frame = [[1,0,0,1],[1,1,1,1],[2,1,0,1],[2,2,1,1],[5,0,0,1],[5,1,0,1],[4,2,1,1],[3,2,1,1]] #건설요청
+# build_frame= [[0,0,0,0],[0,0,0,1],[2,0,0,1],[4,0,0,1],[0,1,1,1],[1,1,1,1],[2,1,1,1],[3,1,1,1],[2,0,0,0],[1,1,1,0],[2,2,0,1]]	
+# build_frame = [[0,0,0,1],[0,1,0,1],[1,0,0,1],[2,0,0,1],[4,1,0,1],[5,4,0,1],[4,4,1,1]]
+# build_frame = [
+#     [0,0,0,1], [0,1,0,1],[0,1,1,1],[0,2,1,1],[3,0,0,1],[3,1,0,1],[3,2,0,1],[2,3,1,1],
+#     [0,2,0,1],[0,3,0,1],[0,3,1,1],[2,0,0,1],[2,1,0,1],[1,2,1,1],[4,0,0,1],[4,1,0,1],[4,2,0,1],[4,3,0,1],[4,4,0,1],[0,4,1,1],[3,4,1,1],
+#     [1,3,0,1],[1,4,1,1],[2,4,1,1],[1,3,0,0],[1,4,1,0],[2,4,1,0],[3,4,1,0]
+# ]
 
-print(solution(n, build_frame))
+# x,y,a x,y 그리고 타입. 
+result =[[1,0,0],[1,1,1],[2,1,0],[2,2,1],[3,2,1],[4,2,1],[5,0,0],[5,1,0]] # 실제 건설
+# result = [[0,0,0],[0,1,1],[1,1,1],[2,1,1],[3,1,1],[4,0,0]]
+# result = [[0,0,0],[0,1,0],[1,0,0],[2,0,0]]
+# result = [[0,0,0], [0,1,0],[0,1,1],[0,2,0],[0,2,1],[0,3,0],[0,3,1],[1,2,1],[2,0,0],[2,1,0]]
+# result = [
+#     [0, 0, 0], [0, 1, 0], [0, 1, 1], [0, 2, 0], [0, 2, 1], [0, 3, 0], [0, 3, 1], [0, 4, 1], [1, 2, 1], [1, 4, 1], 
+#     [2, 0, 0], [2, 1, 0], [2, 3, 1], [2, 4, 1], [3, 0, 0], [3, 1, 0], [3, 2, 0], [3, 4, 1], [4, 0, 0], [4, 1, 0], [4, 2, 0], [4, 3, 0], [4, 4, 0]
+# ]
+
+answer = solution(n, build_frame)
+print(answer)
+assert  answer == result
+print("합격")
+
+
